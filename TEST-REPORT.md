@@ -74,11 +74,20 @@ Pages were rendered from the downloaded PDFs with PDF.js at 1.4× and inspected:
 |---|---|
 | Preset → advanced controls sync (max selects 1‑bit/1600, quality disabled) | ✅ |
 | Custom preset reveals controls; hint & `qualityVal` update live | ✅ |
-| `بدون OCR` disables the language select, TXT/copy buttons, and switches the result note | ✅ |
-| Re-running with OCR re-enables TXT/copy and fills the text box | ✅ |
+| `بدون OCR` disables the language select, TXT/copy buttons, hides the text block, and switches the result note | ✅ |
+| Re-running with OCR re-enables TXT/copy and shows the text block again | ✅ |
 | Digital-text PDF triggers the warning note and an honest size delta (`+12567%`) | ✅ |
-| Stats show before/after sizes and saving percentage | ✅ |
-| Run again after clearing a result resets sizes/buttons | ✅ |
+| Stats show before/after sizes and saving percentage; `−` renders on the correct side (`direction:ltr` isolate) | ✅ |
+| Loading state: button becomes `جاري التحويل…` with spinner + `aria-busy`, restored afterwards | ✅ |
+| Progress heading switches `جاري المعالجة` → `ملخص المعالجة` / `تم الإلغاء` / `توقفت المعالجة` | ✅ |
+| Empty state: no files message under the dropzone, side-rail explainer card before the first run, textarea placeholder | ✅ |
+| Side rail hides the explainer and shows status/result cards when processing completes | ✅ |
+| IBM Plex Sans Arabic loads from `fonts/` (`document.fonts.check` = true) with zero console errors | ✅ |
+| No horizontal overflow at 320, 360, 390, 768, 1024, 1280, 1440 px (`scrollWidth == viewport`) | ✅ |
+| Dark mode (`prefers-color-scheme: dark`) renders all surfaces, chips, buttons and stats with AA contrast | ✅ |
+| Mobile 390px: stacked cards, full-width CTA, 3×2 stats grid, tap targets ≥ 36px | ✅ |
+
+Screenshots: `ocr-pdf-tests/compress/ui-desktop.png`, `ui-mobile.png`, `ui-dark.png`, `ui-empty.png`.
 
 ## Offline / self-host
 
