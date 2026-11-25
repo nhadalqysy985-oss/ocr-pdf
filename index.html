@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f6b8c">
+<meta name="description" content="تحويل PDF الممسوح والصور إلى PDF عربي قابل للتحديد والبحث، بالكامل داخل المتصفح وبدون رفع الملفات.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f6b8c'/%3E%3Ctext x='32' y='42' font-family='Arial' font-size='25' font-weight='bold' fill='white' text-anchor='middle'%3EOCR%3C/text%3E%3C/svg%3E">
+<title>OCR عربي — PDF قابل للبحث | يعمل على جهازك</title>
+<style>
+:root{
+  --bg:#eef2f6; --bg2:#e3ebf2; --card:#fff; --ink:#14212e; --mut:#5b6b7a;
+  --pri:#0f6b8c; --pri2:#0b536d; --pri-soft:#e3f1f7; --line:#d3dde6;
+  --ok:#1f8a5b; --ok-soft:#e4f5ec; --err:#c0392b; --err-soft:#fdecea; --warn:#b26a00;
+  --shadow:0 6px 24px rgba(16,42,67,.08); --r:16px;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0e161d;--bg2:#0b1319;--card:#16212b;--ink:#e8eef3;--mut:#93a4b3;
+    --pri:#37b0d6;--pri2:#65c6e4;--pri-soft:#12313e;--line:#273744;
+    --ok:#3fcf8e;--ok-soft:#123227;--err:#ff7b6b;--err-soft:#3a1a18;--warn:#ffc107;
+    --shadow:0 6px 24px rgba(0,0,0,.28)}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Segoe UI","Tajawal","Noto Naskh Arabic","Noto Sans Arabic",Tahoma,system-ui,sans-serif;
+  line-height:1.75;padding:0 14px 40px;
+}
+body::before{
+  content:"";position:fixed;inset:0 0 auto;height:280px;z-index:-1;
+  background:radial-gradient(1200px 280px at 70% -60px,var(--pri-soft),transparent 70%);
+}
+main{max-width:720px;margin:0 auto}
+header{padding:26px 2px 10px}
+.brand{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,var(--pri),var(--pri2));
+  display:grid;place-items:center;color:#fff;font-weight:800;font-size:19px;box-shadow:var(--shadow);flex:0 0 auto}
+h1{font-size:1.45rem;margin:0;font-weight:800;letter-spacing:-.2px}
+.tag{display:inline-flex;align-items:center;gap:6px;margin-top:2px;font-size:.78rem;font-weight:700;
+  color:var(--ok);background:var(--ok-soft);border-radius:999px;padding:3px 10px}
+.tag svg{width:13px;height:13px}
+.sub{color:var(--mut);margin:10px 0 18px;font-size:.95rem;max-width:60ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:14px;
+  box-shadow:var(--shadow)}
+.card h2{font-size:1.02rem;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;
+  background:var(--pri-soft);color:var(--pri);font-size:.8rem;font-weight:800;flex:0 0 auto}
+.hint{font-size:.8rem;color:var(--mut);font-weight:400}
+#drop{display:flex;flex-direction:column;align-items:center;gap:6px;border:2px dashed var(--pri);
+  background:linear-gradient(180deg,transparent,var(--pri-soft));border-radius:14px;padding:26px 14px;
+  text-align:center;cursor:pointer;font-weight:800;color:var(--pri);transition:background .2s,border-color .2s,transform .1s}
+#drop:hover,#drop:focus-visible,#drop.over{background:var(--pri-soft);border-color:var(--pri2);outline:none}
+#drop.over{transform:scale(1.005)}
+#drop .big{font-size:1.02rem}
+#drop small{color:var(--mut);font-weight:400;font-size:.84rem;line-height:1.5}
+#drop svg{width:34px;height:34px;opacity:.9}
+#fileInput{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+#fileList{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+#fileList li{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--line);
+  border-radius:12px;padding:8px 10px;font-size:.86rem;min-width:0}
+.file-ico{width:30px;height:30px;border-radius:8px;background:var(--pri-soft);color:var(--pri);
+  display:grid;place-items:center;font-size:.68rem;font-weight:800;flex:0 0 auto;text-transform:uppercase}
+.file-meta{min-width:0;flex:1}
+.file-name{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;direction:ltr;text-align:right}
+.file-size{color:var(--mut);font-size:.76rem}
+.rm{background:transparent;border:0;color:var(--mut);font-size:1.3rem;line-height:1;cursor:pointer;
+  width:34px;height:34px;border-radius:9px;flex:0 0 auto}
+.rm:hover{background:var(--err-soft);color:var(--err)}
+.fields{display:grid;grid-template-columns:1fr;gap:12px;margin-top:4px}
+@media(min-width:560px){.fields{grid-template-columns:1fr 1fr}}
+.field{min-width:0}
+label.f{display:block;font-weight:700;margin:0 0 5px;font-size:.86rem}
+select{width:100%;padding:11px 12px;border-radius:11px;border:1px solid var(--line);
+  background:var(--bg);color:var(--ink);font:inherit;font-size:.9rem}
+select:focus-visible{outline:2px solid var(--pri);outline-offset:1px}
+.chk{display:flex;align-items:flex-start;gap:9px;background:var(--bg);border:1px solid var(--line);
+  border-radius:11px;padding:10px 12px;font-size:.86rem;cursor:pointer}
+.chk input{margin:5px 0 0;width:17px;height:17px;accent-color:var(--pri);flex:0 0 auto}
+.chk b{display:block;font-size:.87rem}
+.chk span{display:block;color:var(--mut);font-size:.78rem;line-height:1.5}
+.actions{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap}
+button{font:inherit;font-weight:800;border:0;border-radius:11px;padding:13px 16px;cursor:pointer;
+  background:var(--pri);color:#fff;transition:filter .15s,transform .1s}
+button:hover:not(:disabled){filter:brightness(1.08)}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+#goBtn{flex:1 1 220px;font-size:1rem}
+button.alt{background:transparent;color:var(--pri);border:1.5px solid var(--pri)}
+button.ghost{background:transparent;color:var(--mut);border:1.5px solid var(--line)}
+button.danger{background:transparent;color:var(--err);border:1.5px solid var(--err)}
+button.sm{padding:9px 12px;font-size:.84rem;border-radius:9px}
+#progressCard{display:none}
+#progressCard.on{display:block}
+.prog-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+#pct{font-size:1.6rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--pri)}
+#statusText{font-size:.86rem;color:var(--mut);min-height:1.4em;text-align:left;flex:1}
+#statusText.err{color:var(--err);font-weight:700}
+#bar{height:11px;background:var(--line);border-radius:99px;overflow:hidden;position:relative}
+#barFill{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pri),var(--ok));
+  border-radius:99px;transition:width .25s ease}
+#bar.indet #barFill{width:35%!important;animation:indet 1.2s ease-in-out infinite}
+@keyframes indet{0%{transform:translateX(120%)}100%{transform:translateX(-320%)}}
+.page-list{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:7px;max-height:280px;overflow:auto}
+.page-list li{display:flex;align-items:center;gap:9px;font-size:.82rem;background:var(--bg);
+  border:1px solid var(--line);border-radius:10px;padding:7px 10px;min-width:0}
+.page-list .n{color:var(--mut);font-variant-numeric:tabular-nums;flex:0 0 auto;min-width:4.2em}
+.page-list .msg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mut)}
+.page-list .badge{flex:0 0 auto;font-size:.7rem;font-weight:800;border-radius:99px;padding:2px 8px;
+  background:var(--line);color:var(--mut)}
+.page-list li.done .badge{background:var(--ok-soft);color:var(--ok)}
+.page-list li.run .badge{background:var(--pri-soft);color:var(--pri)}
+.page-list li.err .badge{background:var(--err-soft);color:var(--err)}
+.page-list li.done .msg{color:var(--ink)}
+#errorBox{display:none;margin-top:12px;padding:11px 13px;border-radius:11px;background:var(--err-soft);
+  color:var(--err);font-size:.86rem;border:1px solid color-mix(in srgb,var(--err) 30%,transparent);white-space:pre-wrap;word-break:break-word}
+#errorBox.on{display:block}
+#outCard{display:none}
+#outCard.on{display:block}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:9px 6px;text-align:center}
+.stat b{display:block;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.72rem;color:var(--mut)}
+.dl-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+#dlPdf{grid-column:1/-1}
+@media(min-width:520px){.dl-row{grid-template-columns:1.4fr 1fr 1fr}#dlPdf{grid-column:auto}}
+.dl-row button{margin:0}
+#txtLabel{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#txtLabel .hint{font-weight:400}
+textarea{width:100%;min-height:220px;border:1px solid var(--line);border-radius:12px;background:var(--bg);
+  color:var(--ink);font:inherit;font-size:.9rem;line-height:1.9;padding:12px;resize:vertical}
+textarea:focus-visible{outline:2px solid var(--pri);outline-offset:1px}
+#toast{position:fixed;inset:auto 50% 22px auto;transform:translate(50%,16px);background:var(--ink);
+  color:var(--bg);padding:9px 16px;border-radius:99px;font-size:.84rem;font-weight:700;opacity:0;
+  pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:90vw;text-align:center}
+#toast.on{opacity:.96;transform:translate(50%,0)}
+.note{display:flex;gap:8px;font-size:.8rem;color:var(--mut);background:var(--bg);border:1px solid var(--line);
+  border-radius:11px;padding:10px 12px;margin-top:12px}
+.note svg{width:16px;height:16px;flex:0 0 auto;margin-top:3px;opacity:.8}
+footer{max-width:720px;margin:22px auto 0;padding:0 4px;color:var(--mut);font-size:.78rem;text-align:center}
+footer .links{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;margin-top:6px}
+footer a{color:var(--pri);text-decoration:none;border-bottom:1px dotted currentColor}
+footer a:hover{text-decoration:underline}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true">OCR</div>
+      <div>
+        <h1>OCR عربي للـ PDF والصور</h1>
+        <span class="tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg> 100% على جهازك — ما فيه رفع</span>
+      </div>
+    </div>
+    <p class="sub">حوّل ملفات PDF الممسوحة والصور إلى PDF قابل للتحديد والنسخ والبحث، مع طبقة نص عربية مخفية. كل المعالجة تتم داخل المتصفح، وملفاتك لا تغادر جهازك أبداً.</p>
+  </header>
+
+  <section class="card" aria-labelledby="uploadTitle">
+    <h2 id="uploadTitle"><span class="step" aria-hidden="true">1</span> اختر الملفات</h2>
+    <label id="drop" for="fileInput" tabindex="0" role="button" aria-describedby="dropHint">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+      <span class="big">اضغط لاختيار PDF أو صور</span>
+      <small id="dropHint">PDF / JPG / PNG — تقدر تختار أكثر من ملف، أو اسحب الملفات هنا</small>
+    </label>
+    <input id="fileInput" type="file" accept="application/pdf,image/png,image/jpeg,image/webp,image/bmp,image/gif,image/*" multiple>
+    <ul id="fileList" aria-live="polite"></ul>
+    <div class="note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg>
+      <span>الحد العملي: صفحات A4 بدقة عالية (حتى 4500 بكسل للضلع الأطول). كلما زاد عدد الصفحات زاد الوقت والذاكرة المستخدمة.</span>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="optTitle">
+    <h2 id="optTitle"><span class="step" aria-hidden="true">2</span> خيارات القراءة</h2>
+    <div class="fields">
+      <div class="field">
+        <label class="f" for="langSel">لغة النص</label>
+        <select id="langSel">
+          <option value="ara" selected>العربية</option>
+          <option value="ara+eng">العربية + الإنجليزية</option>
+          <option value="eng">الإنجليزية فقط</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="f" for="cleanSel">تنظيف الصفحة قبل القراءة</label>
+        <select id="cleanSel">
+          <option value="1" selected>رمادي + تمديد التباين (موصى به)</option>
+          <option value="2">رمادي + تباين + ثنائي (Otsu) للصور الباهتة</option>
+          <option value="0">بدون تنظيف (الصورة الأصلية)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="f" for="scaleSel">دقة العرض قبل القراءة</label>
+        <select id="scaleSel">
+          <option value="2">متوسطة (أسرع، 2×)</option>
+          <option value="3" selected>عالية (موصى به، 3×)</option>
+          <option value="4">عالية جداً (أبطأ، 4×)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="f" for="deskewChk">تصحيح الميل</label>
+        <label class="chk" for="deskewChk">
+          <input id="deskewChk" type="checkbox" checked>
+          <span><b>Deskew تلقائي (±5°)</b><span>يقدّر ميل الصفحة ويعدّلها قبل القراءة.</span></span>
+        </label>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="goBtn" type="button" disabled>ابدأ التحويل</button>
+      <button id="cancelBtn" type="button" class="danger hide">إلغاء</button>
+      <button id="clearBtn" type="button" class="ghost" disabled>مسح</button>
+    </div>
+    <div id="engineBadge" class="hint" style="margin-top:10px" aria-live="polite"></div>
+  </section>
+
+  <section class="card" id="progressCard" aria-labelledby="progTitle" aria-live="polite">
+    <h2 id="progTitle"><span class="step" aria-hidden="true">3</span> جاري المعالجة</h2>
+    <div class="prog-top">
+      <span id="pct">0%</span>
+      <span id="statusText" role="status">تجهيز…</span>
+    </div>
+    <div id="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="statusText"><i id="barFill"></i></div>
+    <ul class="page-list" id="pageList"></ul>
+    <div id="errorBox" role="alert"></div>
+  </section>
+
+  <section class="card" id="outCard" aria-labelledby="outTitle">
+    <h2 id="outTitle"><span class="step" aria-hidden="true">4</span> النتيجة</h2>
+    <div class="stats">
+      <div class="stat"><b id="stPages">0</b><span>صفحة</span></div>
+      <div class="stat"><b id="stWords">0</b><span>كلمة</span></div>
+      <div class="stat"><b id="stConf">—</b><span>ثقة المحرك</span></div>
+    </div>
+    <div class="dl-row">
+      <button id="dlPdf" type="button">تنزيل PDF قابل للبحث</button>
+      <button id="dlTxt" type="button" class="alt">تنزيل TXT</button>
+      <button id="copyBtn" type="button" class="alt">نسخ النص</button>
+    </div>
+    <div id="txtLabel">
+      <label class="f" for="txtOut">النص المستخرج</label>
+      <span class="hint" id="txtInfo"></span>
+    </div>
+    <textarea id="txtOut" dir="auto" spellcheck="false" aria-describedby="txtInfo"></textarea>
+    <div class="note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+      <span>ملف PDF الناتج يحتوي على صورة الصفحة مع طبقة نص مخفية، فيبدو كما هو ويمكن البحث فيه. جرّب البحث عن كلمة عربية في قارئ PDF بعد التنزيل.</span>
+    </div>
+  </section>
+
+  <footer>
+    <div>مبني بـ PDF.js 3.11.174 · Tesseract.js 5.1.1 · pdf-lib 1.17.1 — رموز مفتوحة، استخدام تجاري مسموح (Apache-2.0 / MIT).</div>
+    <div class="links" aria-label="Open-source licenses">
+      <a href="vendor/pdfjs/LICENSE" target="_blank" rel="noopener">ترخيص PDF.js (Apache-2.0)</a>
+      <a href="vendor/tesseract/LICENSE.md" target="_blank" rel="noopener">ترخيص Tesseract.js (Apache-2.0)</a>
+      <a href="vendor/tesseract-core/LICENSE" target="_blank" rel="noopener">ترخيص Tesseract Core (Apache-2.0)</a>
+      <a href="vendor/pdf-lib/LICENSE.md" target="_blank" rel="noopener">ترخيص pdf-lib (MIT)</a>
+      <a href="vendor/tessdata/LICENSE" target="_blank" rel="noopener">ترخيص بيانات اللغة (Apache-2.0)</a>
+    </div>
+    <div style="margin-top:8px">Open-source licenses متاحة أيضاً داخل مجلد vendor. لا تُرسل أي بيانات إلى خادم.</div>
+  </footer>
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   OCR عربي — أداة واحدة بلا خادم
+   PDF.js 3.11.174 (Apache-2.0) · Tesseract.js 5.1.1 (Apache-2.0)
+   pdf-lib 1.17.1 (MIT) · tessdata_fast (Apache-2.0)
+   ===================================================================== */
+
+const $ = (id) => document.getElementById(id);
+const MAX_SIDE = 4500;
+const VENDOR = new URL('vendor/', document.baseURI).href;
+
+const CDN = {
+  pdfjs: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+  pdfjsWorker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+  tesseract: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
+  tesseractWorker: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',
+  tesseractCore: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',
+  tessdata: 'https://tessdata.projectnaptha.com/4.0.0',
+  pdfLib: 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js',
+};
+
+const state = {
+  files: [],
+  totalPages: 0,
+  busy: false,
+  cancel: false,
+  worker: null,
+  pdfBytes: null,
+  text: '',
+  pageStatus: [],
+  libs: null,
+  libsPromise: null,
+  pdfWorkerPromise: null,
+  downloadUrls: [],
+  source: '',
+};
+
+/* ----------------------------- أدوات صغيرة ----------------------------- */
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('on'), 2200);
+}
+
+function fmtBytes(n) {
+  if (!n) return '0 بايت';
+  if (n < 1024) return n + ' بايت';
+  if (n < 1048576) return (n / 1024).toFixed(1) + ' كيلوبايت';
+  return (n / 1048576).toFixed(1) + ' ميجابايت';
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function setStatus(msg, isErr) {
+  const el = $('statusText');
+  el.textContent = msg;
+  el.classList.toggle('err', !!isErr);
+}
+
+function setProgress(ratio, opts) {
+  ratio = Math.max(0, Math.min(1, ratio));
+  const pct = Math.round(ratio * 100);
+  $('pct').textContent = pct + '%';
+  $('barFill').style.width = pct + '%';
+  $('bar').setAttribute('aria-valuenow', String(pct));
+  $('bar').classList.toggle('indet', !!(opts && opts.indeterminate));
+}
+
+function showError(msg) {
+  const b = $('errorBox');
+  b.textContent = msg;
+  b.classList.add('on');
+}
+
+function clearError() {
+  $('errorBox').classList.remove('on');
+  $('errorBox').textContent = '';
+}
+
+function yieldToUI() {
+  return new Promise((r) => setTimeout(r, 0));
+}
+
+function loadScript(url) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = url;
+    s.async = false;
+    s.onload = () => resolve(url);
+    s.onerror = () => { s.remove(); reject(new Error('فشل تحميل: ' + url)); };
+    document.head.appendChild(s);
+  });
+}
+
+async function loadFirst(urls, globalName) {
+  const errors = [];
+  for (const url of urls) {
+    try {
+      await loadScript(url);
+      if (window[globalName]) return url;
+      errors.push(url + ' (لم يُعرّف ' + globalName + ')');
+    } catch (e) {
+      errors.push(e.message || String(e));
+    }
+  }
+  throw new Error('تعذّر تحميل ' + globalName + '. ' + errors.join(' | '));
+}
+
+/* تحميل المكتبات: محلي أولاً ثم CDN كاحتياط */
+async function ensureLibs() {
+  if (state.libs) return state.libs;
+  if (state.libsPromise) return state.libsPromise;
+  state.libsPromise = (async () => {
+    setStatus('تحميل محرك PDF والقراءة…');
+    const results = {};
+    // PDF.js + عاملها
+    results.pdfjs = await loadFirst([VENDOR + 'pdfjs/pdf.min.js', CDN.pdfjs], 'pdfjsLib');
+    results.pdfLib = await loadFirst([VENDOR + 'pdf-lib/pdf-lib.min.js', CDN.pdfLib], 'PDFLib');
+    results.tesseract = await loadFirst([VENDOR + 'tesseract/tesseract.min.js', CDN.tesseract], 'Tesseract');
+
+    const vendorPdf = results.pdfjs.indexOf(VENDOR) === 0;
+    const vendorTess = results.tesseract.indexOf(VENDOR) === 0;
+    results.vendorPdf = vendorPdf;
+    results.vendorTess = vendorTess;
+    results.pdfWorkerUrl = vendorPdf ? VENDOR + 'pdfjs/pdf.worker.min.js' : CDN.pdfjsWorker;
+    results.tessWorkerPath = vendorTess ? VENDOR + 'tesseract/worker.min.js' : CDN.tesseractWorker;
+    results.tessCorePath = vendorTess ? VENDOR + 'tesseract-core' : CDN.tesseractCore;
+    results.tessLangPath = vendorTess ? VENDOR + 'tessdata' : CDN.tessdata;
+    results.mode = vendorPdf && vendorTess ? 'local' : 'cdn';
+
+    state.libs = results;
+    const badge = $('engineBadge');
+    badge.textContent = results.mode === 'local'
+      ? 'المحركات محمّلة محلياً (وضع Offline) — لا حاجة للإنترنت بعد التحميل.'
+      : 'تم تحميل بعض المحركات من CDN لأن نسخة vendor غير متوفرة.';
+    return results;
+  })().catch((e) => {
+    state.libsPromise = null;
+    throw e;
+  });
+  return state.libsPromise;
+}
+
+/* عامل PDF.js عبر fetch → Blob URL (يتجنب مشكلة العامل عبر النطاقات) */
+async function initPdfWorker() {
+  if (state.pdfWorkerPromise) return state.pdfWorkerPromise;
+  state.pdfWorkerPromise = (async () => {
+    const libs = await ensureLibs();
+    let url = libs.pdfWorkerUrl;
+    let res;
+    try {
+      res = await fetch(url, { mode: 'cors' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+    } catch (e) {
+      if (url === CDN.pdfjsWorker) throw new Error('تعذّر جلب عامل PDF.js: ' + e.message);
+      url = CDN.pdfjsWorker;
+      res = await fetch(url, { mode: 'cors' });
+      if (!res.ok) throw new Error('تعذّر جلب عامل PDF.js: HTTP ' + res.status);
+    }
+    const code = await res.text();
+    const blobUrl = URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
+    pdfjsLib.GlobalWorkerOptions.workerSrc = blobUrl;
+    return blobUrl;
+  })().catch((e) => {
+    state.pdfWorkerPromise = null;
+    throw new Error('فشل تهيئة عامل PDF.js. إذا فتحت الملف مباشرة (file://) فاستخدم خادماً محلياً. ' + (e.message || e));
+  });
+  return state.pdfWorkerPromise;
+}
+
+/* ----------------------------- اختيار الملفات ----------------------------- */
+
+function isPdf(f) {
+  return f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+}
+
+function isImage(f) {
+  return /^image\//.test(f.type) || /\.(jpe?g|png|webp|bmp|gif|avif)$/i.test(f.name);
+}
+
+function refreshFileUI() {
+  const ul = $('fileList');
+  ul.innerHTML = state.files.map((f, i) => {
+    const ext = isPdf(f) ? 'PDF' : (f.name.split('.').pop() || 'IMG').slice(0, 4).toUpperCase();
+    return '<li><span class="file-ico" aria-hidden="true">' + esc(ext) + '</span>' +
+      '<span class="file-meta"><span class="file-name" title="' + esc(f.name) + '">' + esc(f.name) + '</span>' +
+      '<span class="file-size">' + fmtBytes(f.size) + '</span></span>' +
+      '<button type="button" class="rm" data-i="' + i + '" aria-label="إزالة ' + esc(f.name) + '">×</button></li>';
+  }).join('');
+  $('goBtn').disabled = !state.files.length || state.busy;
+  $('clearBtn').disabled = !state.files.length || state.busy;
+}
+
+function addFiles(list) {
+  const incoming = Array.from(list);
+  const accepted = [];
+  const rejected = [];
+  for (const f of incoming) {
+    if (isPdf(f) || isImage(f)) accepted.push(f);
+    else rejected.push(f.name);
+  }
+  // منع التكرار بنفس الاسم والحجم
+  for (const f of accepted) {
+    if (!state.files.some((x) => x.name === f.name && x.size === f.size)) state.files.push(f);
+  }
+  refreshFileUI();
+  // أي تغيير في الملفات يُلغي نتيجة سابقة حتى لا ينزّل المستخدم ملفاً قديماً
+  if (state.pdfBytes) {
+    state.pdfBytes = null;
+    state.text = '';
+    $('outCard').classList.remove('on');
+  }
+  if (rejected.length) showError('ملفات غير مدعومة: ' + rejected.join('، ') + '. المدعوم: PDF وصور JPG/PNG/WebP.');
+  else clearError();
+}
+
+$('fileInput').addEventListener('change', (e) => {
+  addFiles(e.target.files);
+  e.target.value = '';
+});
+
+$('drop').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('fileInput').click(); }
+});
+
+['dragenter', 'dragover'].forEach((ev) => $('drop').addEventListener(ev, (e) => {
+  e.preventDefault(); e.stopPropagation(); $('drop').classList.add('over');
+}));
+['dragleave', 'drop'].forEach((ev) => $('drop').addEventListener(ev, (e) => {
+  e.preventDefault(); e.stopPropagation(); if (ev === 'dragleave' && $('drop').contains(e.relatedTarget)) return;
+  $('drop').classList.remove('over');
+}));
+$('drop').addEventListener('drop', (e) => {
+  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+});
+window.addEventListener('dragover', (e) => e.preventDefault());
+window.addEventListener('drop', (e) => e.preventDefault());
+
+$('fileList').addEventListener('click', (e) => {
+  const btn = e.target.closest('button.rm');
+  if (!btn || state.busy) return;
+  state.files.splice(+btn.dataset.i, 1);
+  refreshFileUI();
+  if (!state.files.length) { clearError(); $('outCard').classList.remove('on'); }
+});
+
+$('clearBtn').addEventListener('click', () => {
+  if (state.busy) return;
+  state.files = [];
+  state.pdfBytes = null;
+  state.text = '';
+  refreshFileUI();
+  $('outCard').classList.remove('on');
+  $('progressCard').classList.remove('on');
+  $('pageList').innerHTML = '';
+  clearError();
+  setProgress(0);
+  setStatus('');
+});
+
+/* ----------------------------- معالجة الصور ----------------------------- */
+
+function makeCanvas(w, h) {
+  w = Math.max(1, Math.round(w));
+  h = Math.max(1, Math.round(h));
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  return c;
+}
+
+function freeCanvas(c) {
+  if (!c) return;
+  try { c.width = 0; c.height = 0; } catch (_) { /* ignore */ }
+}
+
+/* تقدير الميل عبر تباين إسقاط الصفوف، بزاوية من -5 إلى +5 درجة */
+function estimateSkew(source) {
+  const w0 = source.width, h0 = source.height;
+  if (!w0 || !h0) return 0;
+  const k = Math.min(1, 1000 / Math.max(w0, h0));
+  const w = Math.max(1, Math.round(w0 * k)), h = Math.max(1, Math.round(h0 * k));
+  const small = makeCanvas(w, h);
+  const sctx = small.getContext('2d', { willReadFrequently: true });
+  sctx.fillStyle = '#fff'; sctx.fillRect(0, 0, w, h);
+  sctx.drawImage(source, 0, 0, w, h);
+  const data = sctx.getImageData(0, 0, w, h).data;
+  freeCanvas(small);
+
+  const n = w * h;
+  const gray = new Uint8Array(n);
+  const hist = new Uint32Array(256);
+  for (let i = 0, j = 0; i < n; i++, j += 4) {
+    const v = (data[j] * 0.299 + data[j + 1] * 0.587 + data[j + 2] * 0.114) | 0;
+    gray[i] = v; hist[v]++;
+  }
+  // عتبة Otsu سريعة
+  let total = 0;
+  for (let t = 0; t < 256; t++) total += t * hist[t];
+  let wb = 0, sb = 0, best = -1, thr = 128;
+  for (let t = 0; t < 256; t++) {
+    wb += hist[t]; if (!wb) continue;
+    const wf = n - wb; if (!wf) break;
+    sb += t * hist[t];
+    const mb = sb / wb, mf = (total - sb) / wf;
+    const between = wb * wf * (mb - mf) * (mb - mf);
+    if (between > best) { best = between; thr = t; }
+  }
+  // نتجاهل هوامش الصفحة لأنها تخفض حدة الذروة وتُضعف التقدير
+  const x0 = Math.floor(w * 0.06), x1 = Math.ceil(w * 0.94);
+  const y0 = Math.floor(h * 0.04), y1 = Math.ceil(h * 0.96);
+  const xs = [], ys = [];
+  const step = Math.max(1, Math.floor(Math.sqrt(n / 200000)));
+  for (let y = y0; y < y1; y++) {
+    for (let x = x0; x < x1; x++) {
+      const idx = y * w + x;
+      if (gray[idx] < thr && x % step === 0 && y % step === 0) { xs.push(x - w / 2); ys.push(y); }
+    }
+  }
+  if (xs.length < 150) return 0;
+
+  const pad = Math.ceil(w * 0.0875) + 2; // tan(5°)
+  const size = h + pad * 2;
+  const bins = new Float64Array(size);
+  const scoreAt = (deg) => {
+    const tan = Math.tan((deg * Math.PI) / 180);
+    bins.fill(0);
+    for (let i = 0; i < xs.length; i++) {
+      const row = Math.round(ys[i] + xs[i] * tan) + pad;
+      if (row >= pad && row < pad + h) bins[row]++;
+    }
+    let mean = 0;
+    for (let i = pad; i < pad + h; i++) mean += bins[i];
+    mean /= h;
+    if (mean < 0.0001) return 0;
+    let varSum = 0;
+    for (let i = pad; i < pad + h; i++) { const d = bins[i] - mean; varSum += d * d; }
+    return varSum / (mean * mean);
+  };
+
+  let bestAngle = 0, bestScore = -1;
+  for (let deg = -5; deg <= 5.0001; deg += 0.1) {
+    const score = scoreAt(deg);
+    if (score > bestScore) { bestScore = score; bestAngle = +deg.toFixed(2); }
+  }
+  // إن لم يتحسن التباين بوضوح عن الوضع المستقيم، لا ندوّر الصفحة
+  const straight = scoreAt(0);
+  if (Math.abs(bestAngle) < 0.15 || bestScore < straight * 1.03) return 0;
+  return bestAngle;
+}
+
+function rotateCanvas(source, deg) {
+  const rad = (deg * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(rad)), sin = Math.abs(Math.sin(rad));
+  const w = source.width, h = source.height;
+  const nw = Math.max(1, Math.ceil(w * cos + h * sin));
+  const nh = Math.max(1, Math.ceil(w * sin + h * cos));
+  const out = makeCanvas(nw, nh);
+  const ctx = out.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, nw, nh);
+  ctx.translate(nw / 2, nh / 2);
+  ctx.rotate(rad);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(source, -w / 2, -h / 2);
+  return out;
+}
+
+/* رمادي + تمديد تباين 1%–99% + Otsu اختياري، ثم تصحيح الميل */
+function cleanAndDeskew(source, mode, doDeskew) {
+  let angle = 0;
+  let c = source;
+  if (mode !== 0) {
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    const d = ctx.getImageData(0, 0, c.width, c.height);
+    const p = d.data, n = c.width * c.height;
+    const g = new Uint8Array(n), hist = new Uint32Array(256);
+    for (let i = 0, j = 0; i < n; i++, j += 4) {
+      const v = (p[j] * 0.299 + p[j + 1] * 0.587 + p[j + 2] * 0.114) | 0;
+      g[i] = v; hist[v]++;
+    }
+    // 1% / 99% percentile
+    let lo = 0, hi = 255, acc = 0;
+    const lowCut = n * 0.01;
+    while (lo < 255 && (acc += hist[lo]) < lowCut) lo++;
+    acc = 0;
+    while (hi > 0 && (acc += hist[hi]) < lowCut) hi--;
+    if (hi <= lo) { hi = 255; lo = 0; }
+    const scale = 255 / Math.max(1, hi - lo);
+    let th = -1;
+    if (mode === 2) {
+      // Otsu بعد التمديد
+      const h2 = new Uint32Array(256);
+      for (let i = 0; i < n; i++) {
+        const v = Math.max(0, Math.min(255, (g[i] - lo) * scale)) | 0;
+        g[i] = v; h2[v]++;
+      }
+      let sum = 0;
+      for (let t = 0; t < 256; t++) sum += t * h2[t];
+      let wb = 0, sb = 0, best = -1;
+      for (let t = 0; t < 256; t++) {
+        wb += h2[t]; if (!wb) continue;
+        const wf = n - wb; if (!wf) break;
+        sb += t * h2[t];
+        const mb = sb / wb, mf = (sum - sb) / wf;
+        const between = wb * wf * (mb - mf) * (mb - mf);
+        if (between > best) { best = between; th = t; }
+      }
+    }
+    for (let i = 0, j = 0; i < n; i++, j += 4) {
+      let v = (g[i] - lo) * scale;
+      v = v < 0 ? 0 : v > 255 ? 255 : v | 0;
+      if (th >= 0) v = v > th ? 255 : 0;
+      p[j] = p[j + 1] = p[j + 2] = v; p[j + 3] = 255;
+    }
+    ctx.putImageData(d, 0, 0);
+  }
+  if (doDeskew) {
+    angle = estimateSkew(c);
+    if (angle !== 0) {
+      const rot = rotateCanvas(c, angle);
+      rot.pageW = source.pageW;
+      rot.pageH = source.pageH;
+      if (c !== source) freeCanvas(c);
+      c = rot;
+    }
+  }
+  return { canvas: c, angle };
+}
+
+/* ----------------------------- عمليات PDF/الصور ----------------------------- */
+
+async function openPdf(file) {
+  await initPdfWorker();
+  const data = await file.arrayBuffer();
+  const task = pdfjsLib.getDocument({ data, isEvalSupported: false, useSystemFonts: true });
+  try {
+    return await task.promise;
+  } catch (e) {
+    if (e && e.name === 'PasswordException') {
+      throw new Error('الملف «' + file.name + '» محمي بكلمة مرور. أزل الحماية ثم أعد المحاولة.');
+    }
+    if (e && e.name === 'InvalidPDFException') {
+      throw new Error('تعذّر قراءة «' + file.name + '» — الملف تالف أو ليس PDF صالحاً.');
+    }
+    throw new Error('تعذّر فتح «' + file.name + '»: ' + (e && e.message ? e.message : e));
+  }
+}
+
+async function renderPdfPage(pdf, pageNum, scale) {
+  const page = await pdf.getPage(pageNum);
+  let vp = page.getViewport({ scale });
+  const longest = Math.max(vp.width, vp.height);
+  if (longest > MAX_SIDE) vp = page.getViewport({ scale: scale * (MAX_SIDE / longest) });
+  const canvas = makeCanvas(vp.width, vp.height);
+  const ctx = canvas.getContext('2d', { alpha: false });
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const base = page.getViewport({ scale: 1 });
+  try {
+    await page.render({ canvasContext: ctx, viewport: vp, background: '#ffffff' }).promise;
+  } finally {
+    try { page.cleanup(); } catch (_) {}
+  }
+  canvas.pageW = base.width;
+  canvas.pageH = base.height;
+  return canvas;
+}
+
+async function renderImage(file) {
+  let bmp;
+  try {
+    bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch (e) {
+    throw new Error('تعذّر فتح الصورة «' + file.name + '». تأكد أنها JPG أو PNG سليمة.');
+  }
+  const k = Math.min(1, MAX_SIDE / Math.max(bmp.width, bmp.height));
+  const canvas = makeCanvas(bmp.width * k, bmp.height * k);
+  const ctx = canvas.getContext('2d', { alpha: false });
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  if (bmp.close) bmp.close();
+  return canvas;
+}
+
+/* ----------------------------- شريط الصفحات ----------------------------- */
+
+function buildPageRows(plan) {
+  const ul = $('pageList');
+  ul.innerHTML = plan.map((p, i) => (
+    '<li id="pg' + i + '" data-i="' + i + '"><span class="n">صفحة ' + (i + 1) + '</span>' +
+    '<span class="msg">' + esc(p.file.name) + (p.page ? ' — ' + p.page : '') + '</span>' +
+    '<span class="badge">بانتظار</span></li>'
+  )).join('');
+  state.pageStatus = plan.map(() => 'wait');
+}
+
+function markPage(i, status, msg) {
+  const li = $('pg' + i);
+  if (!li) return;
+  li.classList.remove('done', 'run', 'err');
+  if (status) li.classList.add(status);
+  const badge = li.querySelector('.badge');
+  badge.textContent = status === 'done' ? 'تم' : status === 'run' ? 'جاري' : status === 'err' ? 'خطأ' : 'بانتظار';
+  if (msg) li.querySelector('.msg').textContent = msg;
+  state.pageStatus[i] = status || 'wait';
+}
+
+/* ----------------------------- المهمة الرئيسية ----------------------------- */
+
+function buildPlan() {
+  return state.files.map((f) => ({ file: f, isPdf: isPdf(f) }));
+}
+
+async function countPages() {
+  const plan = buildPlan();
+  let total = 0;
+  for (const item of plan) {
+    if (item.isPdf) {
+      const pdf = await openPdf(item.file);
+      item.pageCount = pdf.numPages;
+      total += pdf.numPages;
+      await pdf.destroy();
+    } else {
+      item.pageCount = 1;
+      total += 1;
+    }
+  }
+  return { plan, total };
+}
+
+async function run() {
+  if (state.busy || !state.files.length) return;
+  state.busy = true;
+  state.cancel = false;
+  state.pdfBytes = null;
+  state.text = '';
+  state.downloadUrls.forEach((u) => URL.revokeObjectURL(u));
+  state.downloadUrls = [];
+  clearError();
+  $('outCard').classList.remove('on');
+  $('goBtn').disabled = true;
+  $('clearBtn').disabled = true;
+  $('cancelBtn').classList.remove('hide');
+  $('progressCard').classList.add('on');
+  $('pageList').innerHTML = '';
+  setProgress(0, { indeterminate: true });
+  setStatus('تجهيز الملفات…');
+
+  const started = performance.now();
+  let worker = null;
+  let pagesDone = 0;
+  try {
+    const libs = await ensureLibs();
+    const { plan, total } = await countPages();
+    state.totalPages = total;
+    if (!total) throw new Error('لا توجد صفحات للمعالجة.');
+    buildPlanRows(plan, total);
+    setProgress(0);
+    setStatus('تحميل محرك القراءة وبيانات اللغة (أول مرة قد يأخذ وقتاً)…');
+
+    worker = await Tesseract.createWorker($('langSel').value, 1, {
+      workerPath: libs.tessWorkerPath,
+      corePath: libs.tessCorePath,
+      langPath: libs.tessLangPath,
+      cacheMethod: 'write',
+      logger: (m) => {
+        if (state.cancel) return;
+        if (m.status === 'recognizing text') {
+          const local = Math.max(0, Math.min(1, m.progress || 0));
+          const overall = (pagesDone + 0.15 + local * 0.85) / total;
+          setProgress(overall);
+          setStatus('قراءة الصفحة ' + (pagesDone + 1) + ' من ' + total + '… ' + Math.round(local * 100) + '%');
+        } else if (m.status === 'loading language traineddata') {
+          setStatus('تحميل بيانات اللغة العربية… ' + Math.round((m.progress || 0) * 100) + '%');
+        } else if (m.status === 'initializing api' || m.status === 'initializing tesseract') {
+          setStatus('تهيئة محرك Tesseract…');
+        }
+      },
+      errorHandler: (e) => {
+        console.error('Tesseract error:', e);
+      },
+    });
+    state.worker = worker;
+    await worker.setParameters({
+      preserve_interword_spaces: '1',
+      user_defined_dpi: '300',
+      tessedit_pageseg_mode: '3',
+    });
+    if (state.cancel) {
+      setStatus('تم الإلغاء.');
+      return;
+    }
+
+    const parts = [];
+    const texts = [];
+    const pageMeta = [];
+    let globalIndex = 0;
+    let failed = 0;
+
+    for (const item of plan) {
+      if (state.cancel) break;
+      let pdf = null;
+      try {
+        if (item.isPdf) pdf = await openPdf(item.file);
+        for (let p = 1; p <= item.pageCount; p++) {
+          if (state.cancel) break;
+          const idx = globalIndex;
+          const label = item.file.name + (item.isPdf ? ' — صفحة ' + p : '');
+          markPage(idx, 'run', label + ' — تحضير الصورة');
+          setStatus('تحضير الصفحة ' + (idx + 1) + ' من ' + total + '…');
+          setProgress((idx + 0.03) / total);
+
+          let canvas;
+          try {
+            canvas = item.isPdf ? await renderPdfPage(pdf, p, +$('scaleSel').value) : await renderImage(item.file);
+          } catch (e) {
+            throw new Error('تعذّر تحضير ' + label + ': ' + (e.message || e));
+          }
+          await yieldToUI();
+
+          markPage(idx, 'run', label + ' — تنظيف وتصحيح الميل');
+          const cleaned = cleanAndDeskew(canvas, +$('cleanSel').value, $('deskewChk').checked);
+          if (cleaned.canvas !== canvas) freeCanvas(canvas);
+          canvas = cleaned.canvas;
+          const angle = cleaned.angle;
+          await yieldToUI();
+
+          markPage(idx, 'run', label + ' — القراءة الضوئية');
+          let res;
+          try {
+            res = await worker.recognize(canvas, {}, { pdf: true, text: true });
+          } catch (e) {
+            throw new Error('فشلت القراءة الضوئية في ' + label + ': ' + (e.message || e));
+          }
+          const data = res.data || {};
+          if (!data.pdf) throw new Error('لم يُرجع المحرك طبقة نصية لـ ' + label + '. جرّب دقة أعلى أو أزل خيار Otsu.');
+
+          const pdfBytes = data.pdf instanceof Uint8Array ? data.pdf : new Uint8Array(data.pdf);
+          parts.push({ bytes: pdfBytes.slice(), w: canvas.pageW || 0, h: canvas.pageH || 0 });
+          const pageText = (data.text || '').trim();
+          texts.push(pageText);
+          pageMeta.push({ file: item.file.name, page: item.isPdf ? p : null, angle, confidence: data.confidence || 0 });
+          const words = pageText ? pageText.split(/\s+/).filter(Boolean).length : 0;
+          markPage(idx, 'done', label + ' — ' + words + ' كلمة' + (angle ? ' · ميل ' + angle.toFixed(2) + '°' : '') + ' · ثقة ' + Math.round(data.confidence || 0) + '%');
+          freeCanvas(canvas);
+          pagesDone++;
+          globalIndex++;
+          setProgress(Math.min(1, (idx + 1) / total));
+          await yieldToUI();
+        }
+      } catch (e) {
+        console.error(e);
+        if (state.cancel) break;
+        failed++;
+        const idx = globalIndex;
+        markPage(idx, 'err', 'خطأ: ' + (e.message || e));
+        showError((e.message || String(e)) + '\n\nتم إيقاف المعالجة. يمكنك حذف الصفحة المتعثرة أو تغيير الخيارات ثم المحاولة.');
+        throw e;
+      } finally {
+        if (pdf) { try { await pdf.destroy(); } catch (_) {} }
+      }
+    }
+
+    if (state.cancel) {
+      setStatus('تم الإلغاء.');
+      setProgress(pagesDone / Math.max(1, total));
+      return;
+    }
+    if (!parts.length) throw new Error('لم تنجح أي صفحة. جرّب ملفاً آخر أو دقة أقل.');
+
+    setProgress(0.99);
+    setStatus('دمج الصفحات في ملف PDF واحد…');
+    await yieldToUI();
+    const out = await PDFLib.PDFDocument.create();
+    out.setTitle('OCR — ' + state.files.map((f) => f.name).join(', ').slice(0, 180));
+    out.setProducer('OCR PDF (Tesseract.js + pdf-lib)');
+    out.setCreator('OCR PDF — browser-only');
+    for (const part of parts) {
+      const src = await PDFLib.PDFDocument.load(part.bytes);
+      const pages = await out.copyPages(src, [0]);
+      const pg = pages[0];
+      out.addPage(pg);
+      // نحافظ على مقاس الصفحة الأصلي (A4 مثلاً) بدل مقاس Tesseract الداخلي
+      if (part.w > 0 && part.h > 0) {
+        const sx = part.w / pg.getWidth();
+        const sy = part.h / pg.getHeight();
+        if (Math.abs(sx - 1) > 0.001 || Math.abs(sy - 1) > 0.001) {
+          pg.scaleContent(sx, sy);
+          pg.setSize(part.w, part.h);
+        }
+      }
+    }
+    state.pdfBytes = await out.save();
+
+    state.text = texts.join('\n\n');
+    const totalWords = texts.reduce((a, t) => a + (t ? t.split(/\s+/).filter(Boolean).length : 0), 0);
+    const scale = +$('scaleSel').value;
+    const finished = texts.length;
+
+    $('stPages').textContent = String(finished);
+    $('stWords').textContent = String(totalWords);
+    const avgConf = pageMeta.length ? Math.round(pageMeta.reduce((a, m) => a + m.confidence, 0) / pageMeta.length) : 0;
+    $('stConf').textContent = avgConf ? avgConf + '%' : '—';
+    $('txtOut').value = state.text;
+    $('txtInfo').textContent = finished + ' صفحة · ' + totalWords + ' كلمة · ' + (performance.now() - started < 60000
+      ? Math.round((performance.now() - started) / 1000) + ' ثانية'
+      : Math.round((performance.now() - started) / 60000) + ' دقيقة');
+    $('outCard').classList.add('on');
+    setProgress(1);
+    const skipped = total - finished;
+    setStatus('تم بنجاح: ' + finished + ' صفحة' + (skipped > 0 ? ' (تعذّرت ' + skipped + ')' : '') + '.');
+    $('outCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) {
+    console.error(e);
+    if (!state.cancel) {
+      setStatus('تعذّر إكمال التحويل.', true);
+      showError('صار خطأ: ' + (e.message || e) + '\n\nجرّب: تقليل الدقة، إيقاف Otsu، أو معالجة عدد أقل من الصفحات في المرة.');
+    }
+  } finally {
+    if (worker) {
+      try { await worker.terminate(); } catch (_) {}
+    }
+    state.worker = null;
+    state.busy = false;
+    $('goBtn').disabled = !state.files.length;
+    $('clearBtn').disabled = !state.files.length;
+    $('cancelBtn').classList.add('hide');
+    $('bar').classList.remove('indet');
+  }
+}
+
+function buildPlanRows(plan, total) {
+  const rows = [];
+  for (const item of plan) {
+    for (let p = 1; p <= item.pageCount; p++) rows.push({ file: item.file, page: item.isPdf ? p : null });
+  }
+  buildPageRows(rows);
+  setStatus('عدد الصفحات: ' + total + '. تحميل محرك القراءة…');
+}
+
+$('goBtn').addEventListener('click', run);
+
+$('cancelBtn').addEventListener('click', async () => {
+  if (!state.busy) return;
+  state.cancel = true;
+  setStatus('جارٍ الإلغاء…');
+  try { if (state.worker) await state.worker.terminate(); } catch (_) {}
+  state.worker = null;
+});
+
+/* ----------------------------- التنزيل والنسخ ----------------------------- */
+
+function saveBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  state.downloadUrls.push(url);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+function baseName() {
+  const n = state.files[0] ? state.files[0].name.replace(/\.[^.]+$/, '') : 'document';
+  return n.replace(/[\\/:*?"<>|]+/g, '_').slice(0, 60) || 'document';
+}
+
+$('dlPdf').addEventListener('click', () => {
+  if (!state.pdfBytes) { toast('لا يوجد ملف جاهز بعد'); return; }
+  saveBlob(new Blob([state.pdfBytes], { type: 'application/pdf' }), baseName() + '-ocr.pdf');
+  toast('تم تنزيل PDF');
+});
+
+$('dlTxt').addEventListener('click', () => {
+  if (!state.text) { toast('لا يوجد نص جاهز'); return; }
+  const header = 'OCR — ' + state.files.map((f) => f.name).join('، ') + '\n\n';
+  const body = state.text;
+  saveBlob(new Blob(['\ufeff' + header + body], { type: 'text/plain;charset=utf-8' }), baseName() + '-ocr.txt');
+  toast('تم تنزيل TXT');
+});
+
+$('copyBtn').addEventListener('click', async () => {
+  const text = state.text;
+  if (!text) { toast('لا يوجد نص للنسخ'); return; }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('تم نسخ النص');
+  } catch (_) {
+    const ta = $('txtOut');
+    ta.focus(); ta.select();
+    try {
+      const ok = document.execCommand('copy');
+      toast(ok ? 'تم نسخ النص' : 'انسخ يدوياً: Ctrl+C');
+    } catch (e) {
+      toast('تعذّر النسخ — حدّد النص وانسخه يدوياً');
+    }
+  }
+});
+
+/* ----------------------------- بدء التشغيل ----------------------------- */
+
+refreshFileUI();
+setProgress(0);
+if (location.protocol === 'file:') {
+  setStatus('تنبيه: فُتح الملف مباشرة. لتعمل العمالة (Workers) والوضع المحلي، شغّله عبر خادم HTTP.', true);
+}
+</script>
+</body>
+</html>
