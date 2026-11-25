@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0f6b8c">
-<meta name="description" content="تحويل PDF الممسوح والصور إلى PDF عربي قابل للتحديد والبحث، بالكامل داخل المتصفح وبدون رفع الملفات.">
+<meta name="description" content="ضغط PDF الممسوح والصور وتحويلها إلى PDF عربي قابل للتحديد والبحث — بالكامل داخل المتصفح وبدون رفع الملفات.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f6b8c'/%3E%3Ctext x='32' y='42' font-family='Arial' font-size='25' font-weight='bold' fill='white' text-anchor='middle'%3EOCR%3C/text%3E%3C/svg%3E">
-<title>OCR عربي — PDF قابل للبحث | يعمل على جهازك</title>
+<title>ضغط و OCR عربي — PDF قابل للبحث | يعمل على جهازك</title>
 <style>
 :root{
   --bg:#eef2f6; --bg2:#e3ebf2; --card:#fff; --ink:#14212e; --mut:#5b6b7a;
@@ -138,12 +138,22 @@ textarea:focus-visible{outline:2px solid var(--pri);outline-offset:1px}
 .note{display:flex;gap:8px;font-size:.8rem;color:var(--mut);background:var(--bg);border:1px solid var(--line);
   border-radius:11px;padding:10px 12px;margin-top:12px}
 .note svg{width:16px;height:16px;flex:0 0 auto;margin-top:3px;opacity:.8}
+.note.warn{background:color-mix(in srgb,var(--warn) 8%,var(--bg));border-color:color-mix(in srgb,var(--warn) 40%,var(--line));color:var(--ink)}
+.note.warn svg{color:var(--warn);opacity:1}
 footer{max-width:720px;margin:22px auto 0;padding:0 4px;color:var(--mut);font-size:.78rem;text-align:center}
 footer .links{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;margin-top:6px}
 footer a{color:var(--pri);text-decoration:none;border-bottom:1px dotted currentColor}
 footer a:hover{text-decoration:underline}
 .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .hide{display:none!important}
+input[type=range]{width:100%;height:28px;margin:6px 0 0;accent-color:var(--pri);cursor:pointer}
+#customBox{margin-top:12px;padding-top:14px;border-top:1px dashed var(--line)}
+.chk.static{cursor:default}
+.chk.static b{color:var(--pri)}
+.stat.top{border-color:color-mix(in srgb,var(--pri) 35%,var(--line));background:var(--pri-soft)}
+.stat.top b{color:var(--pri)}
+.stat.bad b{color:var(--err)}
+#sizeNote b{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -152,11 +162,11 @@ footer a:hover{text-decoration:underline}
     <div class="brand">
       <div class="logo" aria-hidden="true">OCR</div>
       <div>
-        <h1>OCR عربي للـ PDF والصور</h1>
+        <h1>ضغط PDF و OCR عربي</h1>
         <span class="tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg> 100% على جهازك — ما فيه رفع</span>
       </div>
     </div>
-    <p class="sub">حوّل ملفات PDF الممسوحة والصور إلى PDF قابل للتحديد والنسخ والبحث، مع طبقة نص عربية مخفية. كل المعالجة تتم داخل المتصفح، وملفاتك لا تغادر جهازك أبداً.</p>
+    <p class="sub">حوّل ملفات PDF الممسوحة والصور إلى PDF قابل للتحديد والنسخ والبحث مع طبقة نص عربية مخفية — واستخرج نفس الملف بحجم أصغر بكثير. تنظيف الصفحة، تصحيح الميل، ضغط الصور، ثم OCR عربي ودمج كل الصفحات في ملف واحد. كل المعالجة داخل المتصفح، وملفاتك لا تغادر جهازك أبداً.</p>
   </header>
 
   <section class="card" aria-labelledby="uploadTitle">
@@ -217,8 +227,68 @@ footer a:hover{text-decoration:underline}
     <div id="engineBadge" class="hint" style="margin-top:10px" aria-live="polite"></div>
   </section>
 
+  <section class="card" aria-labelledby="sizeTitle">
+    <h2 id="sizeTitle"><span class="step" aria-hidden="true">3</span> الضغط وحجم الملف الناتج</h2>
+    <div class="fields">
+      <div class="field">
+        <label class="f" for="presetSel">مستوى الضغط</label>
+        <select id="presetSel">
+          <option value="balanced" selected>متوازن — موصى به</option>
+          <option value="max">أقصى ضغط — أصغر ملف</option>
+          <option value="high">جودة عالية — أوضح عند التكبير</option>
+          <option value="custom">مخصص…</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="f">ما سيحدث للصورة</span>
+        <div class="chk static">
+          <span><b id="presetTitle">متوازن (موصى به)</b><span id="presetHint">JPEG رمادي بدقة 2000 بكسل للضلع الأطول وجودة 66% — أفضل توازن بين الحجم والوضوح.</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="customBox" class="fields hide">
+      <div class="field">
+        <label class="f" for="longSideSel">أقصى دقة لصورة الصفحة (الضلع الأطول)</label>
+        <select id="longSideSel">
+          <option value="1200">1200 بكسل — أصغر</option>
+          <option value="1600">1600 بكسل</option>
+          <option value="2000" selected>2000 بكسل</option>
+          <option value="2800">2800 بكسل</option>
+          <option value="3600">3600 بكسل — أوضح</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="f" for="imgModeSel">ترميز صورة الصفحة</label>
+        <select id="imgModeSel">
+          <option value="jpeg" selected>JPEG — رمادي/ألوان (أسرع)</option>
+          <option value="bilevel">أبيض وأسود 1‑بت — أصغر وأحدّ</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label class="f" for="qualityRange">جودة JPEG: <b id="qualityVal">66%</b></label>
+        <input id="qualityRange" type="range" min="30" max="95" step="1" value="66" aria-describedby="qualityHint">
+        <div class="hint" id="qualityHint">أقل = ملف أصغر. 55–75% مناسب للنصوص الممسوحة.</div>
+      </div>
+    </div>
+
+    <label class="chk" for="noOcrChk" style="margin-top:12px">
+      <input id="noOcrChk" type="checkbox">
+      <span><b>ضغط سريع بدون OCR</b><span>ينتج PDF صور فقط (من دون طبقة نص) — أسرع بكثير، ومناسب إذا كان النص لا يهمك أو الملف أصلاً يحتوي نصاً ستحتفظ بنسخته الأصلية.</span></span>
+    </label>
+
+    <div class="note" id="sizeNote">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20V8m0 0l-4 4m4-4l4 4"/><path d="M5 4h14"/></svg>
+      <span>الصفحة تُعرض كما نُظّفت (رمادي/تباين/أبيض‑أسود بعد تصحيح الميل)، والنص المخفي يُبنى فوقها. صورة الصفحة تُعاد ترميزها بالدقة والجودة المختارتين، فينخفض الحجم عادةً <b>60–90%</b> مقارنة بملف ممسوح بدقة عالية.</span>
+    </div>
+    <div class="note warn hide" id="digitalNote">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l9 16H3L12 3z"/><path d="M12 9v5m0 3h.01"/></svg>
+      <span id="digitalNoteText"></span>
+    </div>
+  </section>
+
   <section class="card" id="progressCard" aria-labelledby="progTitle" aria-live="polite">
-    <h2 id="progTitle"><span class="step" aria-hidden="true">3</span> جاري المعالجة</h2>
+    <h2 id="progTitle"><span class="step" aria-hidden="true">4</span> جاري المعالجة</h2>
     <div class="prog-top">
       <span id="pct">0%</span>
       <span id="statusText" role="status">تجهيز…</span>
@@ -229,11 +299,14 @@ footer a:hover{text-decoration:underline}
   </section>
 
   <section class="card" id="outCard" aria-labelledby="outTitle">
-    <h2 id="outTitle"><span class="step" aria-hidden="true">4</span> النتيجة</h2>
+    <h2 id="outTitle"><span class="step" aria-hidden="true">5</span> النتيجة</h2>
     <div class="stats">
       <div class="stat"><b id="stPages">0</b><span>صفحة</span></div>
       <div class="stat"><b id="stWords">0</b><span>كلمة</span></div>
       <div class="stat"><b id="stConf">—</b><span>ثقة المحرك</span></div>
+      <div class="stat"><b id="stIn">—</b><span>حجم الأصل</span></div>
+      <div class="stat top"><b id="stOut">—</b><span>حجم الناتج</span></div>
+      <div class="stat" id="stSavingBox"><b id="stSaving">—</b><span>نسبة التوفير</span></div>
     </div>
     <div class="dl-row">
       <button id="dlPdf" type="button">تنزيل PDF قابل للبحث</button>
@@ -245,14 +318,15 @@ footer a:hover{text-decoration:underline}
       <span class="hint" id="txtInfo"></span>
     </div>
     <textarea id="txtOut" dir="auto" spellcheck="false" aria-describedby="txtInfo"></textarea>
-    <div class="note">
+    <div class="note" id="outNote">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
-      <span>ملف PDF الناتج يحتوي على صورة الصفحة مع طبقة نص مخفية، فيبدو كما هو ويمكن البحث فيه. جرّب البحث عن كلمة عربية في قارئ PDF بعد التنزيل.</span>
+      <span id="outNoteText">ملف PDF الناتج يحتوي على صورة الصفحة مع طبقة نص مخفية، فيبدو كما هو ويمكن البحث فيه. جرّب البحث عن كلمة عربية في قارئ PDF بعد التنزيل.</span>
     </div>
   </section>
 
   <footer>
     <div>مبني بـ PDF.js 3.11.174 · Tesseract.js 5.1.1 · pdf-lib 1.17.1 — رموز مفتوحة، استخدام تجاري مسموح (Apache-2.0 / MIT).</div>
+    <div style="margin-top:4px">ضغط الصور داخل المتصفح: JPEG (DCTDecode) أو 1‑بت Flate — بلا خادم ولا رفع.</div>
     <div style="margin-top:10px;font-weight:800;color:var(--ink)">Open-source licenses · التراخيص</div>
     <div class="links" aria-label="Open-source licenses">
       <a href="vendor/pdfjs/LICENSE" target="_blank" rel="noopener noreferrer">ترخيص PDF.js (Apache-2.0)</a>
@@ -303,6 +377,7 @@ const state = {
   pdfWorkerPromise: null,
   downloadUrls: [],
   source: '',
+  noOcr: false,
 };
 
 /* ----------------------------- أدوات صغيرة ----------------------------- */
@@ -320,6 +395,13 @@ function fmtBytes(n) {
   if (n < 1024) return n + ' بايت';
   if (n < 1048576) return (n / 1024).toFixed(1) + ' كيلوبايت';
   return (n / 1048576).toFixed(1) + ' ميجابايت';
+}
+
+function fmtShort(n) {
+  if (!n) return '0';
+  if (n < 1024) return n + ' ب';
+  if (n < 1048576) return Math.round(n / 1024) + ' ك.ب';
+  return (n / 1048576).toFixed(n < 10485760 ? 2 : 1) + ' م.ب';
 }
 
 function esc(s) {
@@ -531,6 +613,7 @@ $('clearBtn').addEventListener('click', () => {
   clearError();
   setProgress(0);
   setStatus('');
+  $('digitalNote').classList.add('hide');
 });
 
 /* ----------------------------- معالجة الصور ----------------------------- */
@@ -703,6 +786,183 @@ function cleanAndDeskew(source, mode, doDeskew) {
   return { canvas: c, angle };
 }
 
+/* ----------------------------- محرك الضغط ----------------------------- */
+
+const PRESETS = {
+  max: {
+    title: 'أقصى ضغط (أصغر ملف)',
+    mode: 'bilevel', longSide: 1600, quality: 55,
+    hint: 'أبيض وأسود 1‑بت بدقة 1600 بكسل — النص يبقى حاداً والحجم ينخفض كثيراً.',
+  },
+  balanced: {
+    title: 'متوازن (موصى به)',
+    mode: 'jpeg', longSide: 2000, quality: 66,
+    hint: 'JPEG بدقة 2000 بكسل للضلع الأطول وجودة 66% — أفضل توازن بين الحجم والوضوح.',
+  },
+  high: {
+    title: 'جودة عالية',
+    mode: 'jpeg', longSide: 2800, quality: 82,
+    hint: 'JPEG بدقة 2800 بكسل وجودة 82% — ملف أكبر قليلاً لكنه أوضح عند التكبير.',
+  },
+};
+
+function readOutputSettings() {
+  const preset = $('presetSel').value;
+  const P = PRESETS[preset];
+  if (P) {
+    return { mode: P.mode, longSide: P.longSide, quality: P.quality / 100, noOcr: $('noOcrChk').checked };
+  }
+  return {
+    mode: $('imgModeSel').value,
+    longSide: +$('longSideSel').value,
+    quality: +$('qualityRange').value / 100,
+    noOcr: $('noOcrChk').checked,
+  };
+}
+
+function syncCompressionUI() {
+  const preset = $('presetSel').value;
+  const P = PRESETS[preset];
+  const noOcr = $('noOcrChk').checked;
+  if (P) {
+    $('longSideSel').value = String(P.longSide);
+    $('imgModeSel').value = P.mode;
+    $('qualityRange').value = String(P.quality);
+    $('presetTitle').textContent = P.title;
+  } else {
+    $('presetTitle').textContent = 'إعدادات مخصصة';
+  }
+  $('customBox').classList.toggle('hide', !!P);
+
+  const longSide = P ? P.longSide : +$('longSideSel').value;
+  const mode = noOcr ? 'jpeg' : (P ? P.mode : $('imgModeSel').value);
+  const quality = P ? P.quality : +$('qualityRange').value;
+  $('qualityRange').disabled = mode === 'bilevel';
+  $('qualityVal').textContent = quality + '%';
+  $('presetHint').textContent =
+    (mode === 'bilevel' ? 'صورة أبيض وأسود 1‑بت' : 'صورة JPEG') + ' بدقة ' + longSide + ' بكسل للضلع الأطول' +
+    (mode === 'bilevel' ? ' — نص أحدّ وحجم أصغر.' : ' وجودة ' + quality + '%.') +
+    (noOcr ? ' بدون طبقة نص (ضغط سريع).' : ' مع طبقة نص عربية مخفية.');
+}
+
+function resizeCanvasForOutput(src, maxSide) {
+  const k = Math.min(1, maxSide / Math.max(src.width, src.height));
+  if (k > 0.999) return src;
+  const out = makeCanvas(src.width * k, src.height * k);
+  const ctx = out.getContext('2d', { alpha: false });
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, out.width, out.height);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(src, 0, 0, out.width, out.height);
+  return out;
+}
+
+function otsuThreshold(gray) {
+  const n = gray.length, hist = new Uint32Array(256);
+  for (let i = 0; i < n; i++) hist[gray[i]]++;
+  let sum = 0;
+  for (let t = 0; t < 256; t++) sum += t * hist[t];
+  let wb = 0, sb = 0, best = -1, thr = 128;
+  for (let t = 0; t < 256; t++) {
+    wb += hist[t];
+    if (!wb) continue;
+    const wf = n - wb;
+    if (!wf) break;
+    sb += t * hist[t];
+    const mb = sb / wb, mf = (sum - sb) / wf;
+    const between = wb * wf * (mb - mf) * (mb - mf);
+    if (between > best) { best = between; thr = t; }
+  }
+  return thr;
+}
+
+async function deflateBytes(bytes) {
+  try {
+    if (typeof CompressionStream !== 'function') return null;
+    const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  } catch (_) {
+    return null;
+  }
+}
+
+/* صورة 1-بت: أبيض للنص والخلفية، معبأة بتات ومضغوطة Flate */
+async function encodeBilevel(canvas) {
+  const w = canvas.width, h = canvas.height;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const src = ctx.getImageData(0, 0, w, h).data;
+  const gray = new Uint8Array(w * h);
+  for (let i = 0, j = 0; i < gray.length; i++, j += 4) {
+    gray[i] = (src[j] * 0.299 + src[j + 1] * 0.587 + src[j + 2] * 0.114) | 0;
+  }
+  const thr = otsuThreshold(gray);
+  const rowBytes = (w + 7) >> 3;
+  const packed = new Uint8Array(rowBytes * h);
+  for (let y = 0, p = 0; y < h; y++) {
+    const row = y * rowBytes;
+    for (let x = 0; x < w; x++, p++) {
+      if (gray[p] > thr) packed[row + (x >> 3)] |= 0x80 >> (x & 7);
+    }
+  }
+  const bytes = await deflateBytes(packed);
+  if (!bytes) return null;
+  return { bytes, filter: 'FlateDecode', colorSpace: 'DeviceGray', bpc: 1, width: w, height: h, mime: 'image/1bit' };
+}
+
+function canvasToJpeg(canvas, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error('تعذّر ترميز صورة الصفحة إلى JPEG.'));
+    }, 'image/jpeg', quality);
+  });
+}
+
+async function encodeOutputImage(canvas, opts) {
+  const small = resizeCanvasForOutput(canvas, opts.longSide);
+  try {
+    if (opts.mode === 'bilevel') {
+      const bi = await encodeBilevel(small);
+      if (bi) return bi;
+    }
+    const blob = await canvasToJpeg(small, opts.quality);
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    return { bytes, filter: 'DCTDecode', colorSpace: 'DeviceRGB', bpc: 8, width: small.width, height: small.height, mime: 'image/jpeg' };
+  } finally {
+    if (small !== canvas) freeCanvas(small);
+  }
+}
+
+/* استبدال صورة الصفحة داخل PDF الصفحة التي ينتجها Tesseract، مع الإبقاء على طبقة النص */
+async function replacePageImage(pdfBytes, img) {
+  const doc = await PDFLib.PDFDocument.load(pdfBytes, { updateMetadata: false });
+  const page = doc.getPage(0);
+  const resources = page.node.Resources();
+  const xo = resources ? resources.lookup(PDFLib.PDFName.of('XObject')) : null;
+  if (!xo) return pdfBytes;
+  let key = null;
+  for (const k of xo.keys()) {
+    const obj = doc.context.lookup(xo.get(k));
+    const sub = obj && obj.dict && obj.dict.get(PDFLib.PDFName.of('Subtype'));
+    if (sub && String(sub) === '/Image') { key = k; break; }
+  }
+  if (!key) return pdfBytes;
+  const oldRef = xo.get(key);
+  const dict = PDFLib.PDFDict.withContext(doc.context);
+  dict.set(PDFLib.PDFName.of('Type'), PDFLib.PDFName.of('XObject'));
+  dict.set(PDFLib.PDFName.of('Subtype'), PDFLib.PDFName.of('Image'));
+  dict.set(PDFLib.PDFName.of('Width'), PDFLib.PDFNumber.of(img.width));
+  dict.set(PDFLib.PDFName.of('Height'), PDFLib.PDFNumber.of(img.height));
+  dict.set(PDFLib.PDFName.of('ColorSpace'), PDFLib.PDFName.of(img.colorSpace));
+  dict.set(PDFLib.PDFName.of('BitsPerComponent'), PDFLib.PDFNumber.of(img.bpc));
+  dict.set(PDFLib.PDFName.of('Filter'), PDFLib.PDFName.of(img.filter));
+  const newRef = doc.context.register(PDFLib.PDFRawStream.of(dict, img.bytes));
+  xo.set(key, newRef);
+  try { doc.context.delete(oldRef); } catch (_) { /* detached */ }
+  return await doc.save();
+}
+
 /* ----------------------------- عمليات PDF/الصور ----------------------------- */
 
 async function openPdf(file) {
@@ -796,10 +1056,22 @@ async function countPages() {
     if (item.isPdf) {
       const pdf = await openPdf(item.file);
       item.pageCount = pdf.numPages;
+      // كشف النص الرقمي الأصلي في أول صفحتين لتنبيه المستخدم
+      let chars = 0;
+      for (let p = 1; p <= Math.min(2, pdf.numPages); p++) {
+        try {
+          const pg = await pdf.getPage(p);
+          const tc = await pg.getTextContent();
+          chars += tc.items.reduce((a, it) => a + (it.str ? it.str.length : 0), 0);
+          pg.cleanup();
+        } catch (_) { /* تجاهل */ }
+      }
+      item.hasText = chars > 80;
       total += pdf.numPages;
       await pdf.destroy();
     } else {
       item.pageCount = 1;
+      item.hasText = false;
       total += 1;
     }
   }
@@ -816,6 +1088,8 @@ async function run() {
   state.downloadUrls = [];
   clearError();
   $('outCard').classList.remove('on');
+  $('dlTxt').disabled = false;
+  $('copyBtn').disabled = false;
   $('goBtn').disabled = true;
   $('clearBtn').disabled = true;
   $('cancelBtn').classList.remove('hide');
@@ -825,6 +1099,8 @@ async function run() {
   setStatus('تجهيز الملفات…');
 
   const started = performance.now();
+  const opts = readOutputSettings();
+  const inputBytes = state.files.reduce((a, f) => a + f.size, 0);
   let worker = null;
   let pagesDone = 0;
   try {
@@ -834,39 +1110,53 @@ async function run() {
     if (!total) throw new Error('لا توجد صفحات للمعالجة.');
     buildPlanRows(plan, total);
     setProgress(0);
-    setStatus('تحميل محرك القراءة وبيانات اللغة (أول مرة قد يأخذ وقتاً)…');
 
-    worker = await Tesseract.createWorker($('langSel').value, 1, {
-      workerPath: libs.tessWorkerPath,
-      corePath: libs.tessCorePath,
-      langPath: libs.tessLangPath,
-      cacheMethod: 'write',
-      logger: (m) => {
-        if (state.cancel) return;
-        if (m.status === 'recognizing text') {
-          const local = Math.max(0, Math.min(1, m.progress || 0));
-          const overall = (pagesDone + 0.15 + local * 0.85) / total;
-          setProgress(overall);
-          setStatus('قراءة الصفحة ' + (pagesDone + 1) + ' من ' + total + '… ' + Math.round(local * 100) + '%');
-        } else if (m.status === 'loading language traineddata') {
-          setStatus('تحميل بيانات اللغة العربية… ' + Math.round((m.progress || 0) * 100) + '%');
-        } else if (m.status === 'initializing api' || m.status === 'initializing tesseract') {
-          setStatus('تهيئة محرك Tesseract…');
-        }
-      },
-      errorHandler: (e) => {
-        console.error('Tesseract error:', e);
-      },
-    });
-    state.worker = worker;
-    await worker.setParameters({
-      preserve_interword_spaces: '1',
-      user_defined_dpi: '300',
-      tessedit_pageseg_mode: '3',
-    });
-    if (state.cancel) {
-      setStatus('تم الإلغاء.');
-      return;
+    const digital = plan.filter((x) => x.hasText).map((x) => x.file.name);
+    if (digital.length) {
+      $('digitalNote').classList.remove('hide');
+      $('digitalNoteText').textContent = 'تنبيه: ' + digital.join('، ') +
+        ' يحتوي نصاً رقمياً أصلاً. المعالجة ستحوّل صفحاته إلى صورة مضغوطة (يمكن أن تفقد النص الأصلي). إن كان الملف رقمياً فالأفضل عدم إعادة معالجته.';
+    } else {
+      $('digitalNote').classList.add('hide');
+    }
+
+    if (!opts.noOcr) {
+      setStatus('تحميل محرك القراءة وبيانات اللغة (أول مرة قد يأخذ وقتاً)…');
+
+      worker = await Tesseract.createWorker($('langSel').value, 1, {
+        workerPath: libs.tessWorkerPath,
+        corePath: libs.tessCorePath,
+        langPath: libs.tessLangPath,
+        cacheMethod: 'write',
+        logger: (m) => {
+          if (state.cancel) return;
+          if (m.status === 'recognizing text') {
+            const local = Math.max(0, Math.min(1, m.progress || 0));
+            const overall = (pagesDone + 0.15 + local * 0.85) / total;
+            setProgress(overall);
+            setStatus('قراءة الصفحة ' + (pagesDone + 1) + ' من ' + total + '… ' + Math.round(local * 100) + '%');
+          } else if (m.status === 'loading language traineddata') {
+            setStatus('تحميل بيانات اللغة العربية… ' + Math.round((m.progress || 0) * 100) + '%');
+          } else if (m.status === 'initializing api' || m.status === 'initializing tesseract') {
+            setStatus('تهيئة محرك Tesseract…');
+          }
+        },
+        errorHandler: (e) => {
+          console.error('Tesseract error:', e);
+        },
+      });
+      state.worker = worker;
+      await worker.setParameters({
+        preserve_interword_spaces: '1',
+        user_defined_dpi: '300',
+        tessedit_pageseg_mode: '3',
+      });
+      if (state.cancel) {
+        setStatus('تم الإلغاء.');
+        return;
+      }
+    } else {
+      setStatus('وضع الضغط السريع بدون OCR — تنظيف الصور وضغطها…');
     }
 
     const parts = [];
@@ -903,23 +1193,38 @@ async function run() {
           const angle = cleaned.angle;
           await yieldToUI();
 
-          markPage(idx, 'run', label + ' — القراءة الضوئية');
-          let res;
-          try {
-            res = await worker.recognize(canvas, {}, { pdf: true, text: true });
-          } catch (e) {
-            throw new Error('فشلت القراءة الضوئية في ' + label + ': ' + (e.message || e));
-          }
-          const data = res.data || {};
-          if (!data.pdf) throw new Error('لم يُرجع المحرك طبقة نصية لـ ' + label + '. جرّب دقة أعلى أو أزل خيار Otsu.');
+          markPage(idx, 'run', label + ' — ضغط صورة الصفحة');
+          setStatus('ضغط الصفحة ' + (idx + 1) + ' من ' + total + '…');
+          const enc = await encodeOutputImage(canvas, opts.noOcr ? { mode: 'jpeg', longSide: opts.longSide, quality: opts.quality } : opts);
+          await yieldToUI();
 
-          const pdfBytes = data.pdf instanceof Uint8Array ? data.pdf : new Uint8Array(data.pdf);
-          parts.push({ bytes: pdfBytes.slice(), w: canvas.pageW || 0, h: canvas.pageH || 0 });
-          const pageText = (data.text || '').trim();
-          texts.push(pageText);
-          pageMeta.push({ file: item.file.name, page: item.isPdf ? p : null, angle, confidence: data.confidence || 0 });
+          let pageText = '';
+          let confidence = 0;
+          if (opts.noOcr) {
+            parts.push({ kind: 'image', enc, w: canvas.pageW || 0, h: canvas.pageH || 0 });
+          } else {
+            markPage(idx, 'run', label + ' — القراءة الضوئية');
+            let res;
+            try {
+              res = await worker.recognize(canvas, {}, { pdf: true, text: true });
+            } catch (e) {
+              throw new Error('فشلت القراءة الضوئية في ' + label + ': ' + (e.message || e));
+            }
+            const data = res.data || {};
+            if (!data.pdf) throw new Error('لم يُرجع المحرك طبقة نصية لـ ' + label + '. جرّب دقة أعلى أو أزل خيار Otsu.');
+
+            const srcBytes = data.pdf instanceof Uint8Array ? data.pdf : new Uint8Array(data.pdf);
+            setStatus('ضغط الصفحة ' + (idx + 1) + ' من ' + total + '…');
+            const mergedBytes = await replacePageImage(srcBytes, enc);
+            parts.push({ kind: 'pdf', bytes: mergedBytes, w: canvas.pageW || 0, h: canvas.pageH || 0 });
+            pageText = (data.text || '').trim();
+            confidence = data.confidence || 0;
+            texts.push(pageText);
+            pageMeta.push({ file: item.file.name, page: item.isPdf ? p : null, angle, confidence });
+          }
+          await yieldToUI();
           const words = pageText ? pageText.split(/\s+/).filter(Boolean).length : 0;
-          markPage(idx, 'done', label + ' — ' + words + ' كلمة' + (angle ? ' · ميل ' + angle.toFixed(2) + '°' : '') + ' · ثقة ' + Math.round(data.confidence || 0) + '%');
+          markPage(idx, 'done', label + (opts.noOcr ? '' : ' — ' + words + ' كلمة') + (angle ? ' · ميل ' + angle.toFixed(2) + '°' : '') + (confidence ? ' · ثقة ' + Math.round(confidence) + '%' : '') + ' · ' + fmtBytes(enc.bytes.length));
           freeCanvas(canvas);
           pagesDone++;
           globalIndex++;
@@ -950,10 +1255,19 @@ async function run() {
     setStatus('دمج الصفحات في ملف PDF واحد…');
     await yieldToUI();
     const out = await PDFLib.PDFDocument.create();
-    out.setTitle('OCR — ' + state.files.map((f) => f.name).join(', ').slice(0, 180));
-    out.setProducer('OCR PDF (Tesseract.js + pdf-lib)');
-    out.setCreator('OCR PDF — browser-only');
+    out.setTitle((opts.noOcr ? 'PDF مضغوط — ' : 'OCR — ') + state.files.map((f) => f.name).join(', ').slice(0, 170));
+    out.setProducer('OCR + PDF Compress (Tesseract.js + pdf-lib)');
+    out.setCreator('OCR + compress — browser-only');
     for (const part of parts) {
+      if (part.kind === 'image') {
+        // وضع الضغط السريع: الصورة فقط، بلا طبقة نص
+        const w = part.w > 0 ? part.w : part.enc.width * (72 / 300);
+        const h = part.h > 0 ? part.h : part.enc.height * (72 / 300);
+        const pg = out.addPage([w, h]);
+        const img = await out.embedJpg(part.enc.bytes);
+        pg.drawImage(img, { x: 0, y: 0, width: w, height: h });
+        continue;
+      }
       const src = await PDFLib.PDFDocument.load(part.bytes);
       const pages = await out.copyPages(src, [0]);
       const pg = pages[0];
@@ -969,24 +1283,36 @@ async function run() {
       }
     }
     state.pdfBytes = await out.save();
+    state.noOcr = opts.noOcr;
 
     state.text = texts.join('\n\n');
     const totalWords = texts.reduce((a, t) => a + (t ? t.split(/\s+/).filter(Boolean).length : 0), 0);
-    const scale = +$('scaleSel').value;
-    const finished = texts.length;
+    const finished = pagesDone;
+    const outBytes = state.pdfBytes.length;
+    const saving = inputBytes ? (1 - outBytes / inputBytes) * 100 : 0;
 
     $('stPages').textContent = String(finished);
     $('stWords').textContent = String(totalWords);
     const avgConf = pageMeta.length ? Math.round(pageMeta.reduce((a, m) => a + m.confidence, 0) / pageMeta.length) : 0;
     $('stConf').textContent = avgConf ? avgConf + '%' : '—';
+    $('stIn').textContent = fmtShort(inputBytes);
+    $('stOut').textContent = fmtShort(outBytes);
+    $('stSaving').textContent = (saving >= 0 ? '−' : '+') + Math.abs(saving).toFixed(0) + '%';
+    $('stSavingBox').classList.toggle('bad', saving < 0);
+    $('stSavingBox').title = 'حجم الناتج ' + (saving >= 0 ? 'أصغر' : 'أكبر') + ' من مجموع الملفات الأصلية بنسبة ' + Math.abs(saving).toFixed(1) + '%';
     $('txtOut').value = state.text;
     $('txtInfo').textContent = finished + ' صفحة · ' + totalWords + ' كلمة · ' + (performance.now() - started < 60000
       ? Math.round((performance.now() - started) / 1000) + ' ثانية'
       : Math.round((performance.now() - started) / 60000) + ' دقيقة');
+    $('dlTxt').disabled = !state.text;
+    $('copyBtn').disabled = !state.text;
+    $('outNoteText').textContent = opts.noOcr
+      ? 'هذا الملف صورة فقط من دون طبقة نص (وضع الضغط السريع). للحصول على PDF قابل للبحث أعد التجهيز بعد إلغاء خيار «ضغط سريع بدون OCR».'
+      : 'ملف PDF الناتج يحتوي على صورة الصفحة المضغوطة مع طبقة نص مخفية، فيبدو كما هو ويمكن البحث فيه ونسخ النص. جرّب البحث عن كلمة عربية في قارئ PDF بعد التنزيل.';
     $('outCard').classList.add('on');
     setProgress(1);
     const skipped = total - finished;
-    setStatus('تم بنجاح: ' + finished + ' صفحة' + (skipped > 0 ? ' (تعذّرت ' + skipped + ')' : '') + '.');
+    setStatus('تم بنجاح: ' + finished + ' صفحة · ' + fmtShort(inputBytes) + ' ← ' + fmtShort(outBytes) + ' (' + (saving >= 0 ? '−' : '+') + Math.abs(saving).toFixed(0) + '%)' + (skipped > 0 ? ' · تعذّرت ' + skipped : '') + '.');
     $('outCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (e) {
     console.error(e);
@@ -1044,7 +1370,7 @@ function baseName() {
 
 $('dlPdf').addEventListener('click', () => {
   if (!state.pdfBytes) { toast('لا يوجد ملف جاهز بعد'); return; }
-  saveBlob(new Blob([state.pdfBytes], { type: 'application/pdf' }), baseName() + '-ocr.pdf');
+  saveBlob(new Blob([state.pdfBytes], { type: 'application/pdf' }), baseName() + (state.noOcr ? '-compressed.pdf' : '-ocr.pdf'));
   toast('تم تنزيل PDF');
 });
 
@@ -1074,7 +1400,20 @@ $('copyBtn').addEventListener('click', async () => {
   }
 });
 
+/* ----------------------------- إعدادات الضغط ----------------------------- */
+
+$('presetSel').addEventListener('change', syncCompressionUI);
+$('imgModeSel').addEventListener('change', syncCompressionUI);
+$('longSideSel').addEventListener('change', syncCompressionUI);
+$('qualityRange').addEventListener('input', syncCompressionUI);
+$('noOcrChk').addEventListener('change', () => {
+  $('langSel').disabled = $('noOcrChk').checked;
+  syncCompressionUI();
+});
+
 /* ----------------------------- بدء التشغيل ----------------------------- */
+
+syncCompressionUI();
 
 refreshFileUI();
 setProgress(0);
