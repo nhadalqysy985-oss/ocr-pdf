@@ -77,7 +77,7 @@ On a synthetic scanned-style Arabic exam paper (2 A4 pages, +1.35°/−0.9° rot
 | Default: 3×, contrast, deskew | **98.58 %** | 94.03 % | 10/10 |
 | 4× + Otsu, deskew | **100 %** | 100 % | 10/10 |
 
-See [TEST-REPORT.md](TEST-REPORT.md) for methodology and the PDF.js RTL note.
+Accuracy is measured on the text extracted from the downloaded PDF with PDF.js `getTextContent()`, after applying the standard inverse bidi reordering that PDF.js requires for RTL text (see the report). See [TEST-REPORT.md](TEST-REPORT.md) for methodology and full live/offline results.
 
 ## Licenses
 
