@@ -61,7 +61,15 @@ PDF.js applies the Unicode bidi algorithm to each text item in `getTextContent()
 
 ### Image input
 
-A 2000×2828 scanned-style PNG was uploaded directly (no PDF wrapper). One page was produced in **11.9 s** at 85 % confidence, page size 495×690 pt, searchable text layer present. The image path uses the same render/clean/deskew/OCR pipeline.
+A 2000×2828 scanned-style PNG was uploaded directly (no PDF wrapper). One page was produced in **11.9 s** at 85 % confidence, page size 495×690 pt, with a searchable text layer. Accuracy on page 1's ground truth: **98.25 % character / 93.65 % word** (63/63 words). Three of the four page-1 probes matched exactly; `الامتحانات` was misread as `التمتعانات` in this lower-resolution run.
+
+### Arabic + English
+
+`ara+eng` was selected with the same PNG. The worker loaded both `ara.traineddata.gz` and `eng.traineddata.gz` from `vendor/tessdata`, produced a page in the usual time, and the extracted text still contained `الجمهورية`. Console errors: 0.
+
+### Copy to clipboard
+
+With clipboard permissions granted, the copy button reported `تم نسخ النص` and `navigator.clipboard.readText()` returned the full 441-character text. The only difference from the textarea is Windows CRLF line endings (`\r\n`), which is normal clipboard behaviour.
 
 ### Offline / self-host verification
 
@@ -72,7 +80,24 @@ The page was loaded in a fresh browser context with a route interceptor that **a
 - blocked external requests: **none** (all assets came from `vendor/`)
 - console errors: 0
 
-This confirms the `workerPath` / `corePath` / `langPath` self-host wiring and the offline claim.
+The same test was repeated after pruning the unused non-LSTM WASM builds and still passed. This confirms the `workerPath` / `corePath` / `langPath` self-host wiring and the offline claim.
+
+### CDN fallback
+
+In a separate run every request to `**/vendor/**` was aborted. The app caught the failures, loaded PDF.js/Tesseract.js/pdf-lib from cdnjs/jsDelivr, loaded the worker, core and `ara` data from CDNs, and completed OCR successfully. The engine badge correctly switched to `تم تحميل بعض المحركات من CDN…`. This confirms the fallback path while keeping self-host as the default.
+
+### Live deployment (GitHub Pages)
+
+The deployed site was tested end-to-end after Pages reported `built`:
+
+- URL: https://nhadalqysy985-oss.github.io/ocr-pdf/
+- Initial load: **0.76 s**; full OCR of the 2-page PDF: **27.7 s**.
+- Engine badge: local/offline vendor mode (no CDN requests).
+- Output: 2 pages, A4, 4.34 MB.
+- PDF.js logical text accuracy: **98.58 % character**, **94.03 % word**, **10/10** search probes.
+- All 14 checked assets and both docs returned HTTP 200, including `ara.traineddata.gz`, core WASM JS, and every license file.
+- Console errors: **0**.
+- Live screenshot: `ocr-pdf-tests/screens/live-result.png`.
 
 ## Reproduce
 
