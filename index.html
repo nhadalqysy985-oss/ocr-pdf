@@ -475,12 +475,13 @@ footer a{color:var(--brand)}
         </select>
       </div>
       <div class="field">
-        <label class="f" for="scaleSel">دقة العرض قبل القراءة</label>
+        <label class="f" for="scaleSel">دقة القراءة الضوئية</label>
         <select id="scaleSel">
           <option value="2">متوسطة (أسرع، 2×)</option>
-          <option value="3" selected>عالية (موصى به، 3×)</option>
-          <option value="4">عالية جداً (أبطأ، 4×)</option>
+          <option value="3">عالية (3×)</option>
+          <option value="4" selected>عالية جداً (موصى به، 4×)</option>
         </select>
+        <div class="hint" style="margin-top:6px">4× يقرأ أرقام الصفحات والنصوص الصغيرة بدقة أعلى.</div>
       </div>
       <div class="field">
         <label class="f" for="deskewChk">تصحيح الميل</label>
@@ -506,6 +507,7 @@ footer a{color:var(--brand)}
         <select id="presetSel">
           <option value="balanced" selected>متوازن — موصى به</option>
           <option value="max">أقصى ضغط — أصغر ملف</option>
+          <option value="ai">قراءة آلية (AI) — أوضح للذكاء الاصطناعي</option>
           <option value="high">جودة عالية — أوضح عند التكبير</option>
           <option value="custom">مخصص…</option>
         </select>
@@ -1082,8 +1084,8 @@ function cleanAndDeskew(source, mode, doDeskew) {
 const PRESETS = {
   max: {
     title: 'أقصى ضغط (أصغر ملف)',
-    mode: 'bilevel', longSide: 1600, quality: 55,
-    hint: 'أبيض وأسود 1‑بت بدقة 1600 بكسل — النص يبقى حاداً والحجم ينخفض كثيراً.',
+    mode: 'bilevel', longSide: 2000, quality: 55,
+    hint: 'أبيض وأسود 1‑بت بدقة 2000 بكسل — النص يبقى حاداً والحجم ينخفض كثيراً.',
   },
   balanced: {
     title: 'متوازن (موصى به)',
@@ -1094,6 +1096,11 @@ const PRESETS = {
     title: 'جودة عالية',
     mode: 'jpeg', longSide: 2800, quality: 82,
     hint: 'JPEG بدقة 2800 بكسل وجودة 82% — ملف أكبر قليلاً لكنه أوضح عند التكبير.',
+  },
+  ai: {
+    title: 'قراءة آلية (AI)',
+    mode: 'jpeg', longSide: 2400, quality: 88,
+    hint: 'JPEG بدقة 2400 بكسل وجودة 88% — الأوضح للنماذج التي تقرأ الصور: أرقام الصفحات والنصوص الصغيرة تبقى مقروءة.',
   },
 };
 
@@ -1199,6 +1206,27 @@ async function encodeBilevel(canvas) {
   const bytes = await deflateBytes(packed);
   if (!bytes) return null;
   return { bytes, filter: 'FlateDecode', colorSpace: 'DeviceGray', bpc: 1, width: w, height: h, mime: 'image/1bit' };
+}
+
+/* نسخة ثنائية (Otsu) من الصفحة تُستخدم للقراءة الضوئية فقط، لا للصورة المرئية */
+function binarizeForOcr(src) {
+  const out = makeCanvas(src.width, src.height);
+  const ctx = out.getContext('2d', { willReadFrequently: true, alpha: false });
+  ctx.drawImage(src, 0, 0);
+  const img = ctx.getImageData(0, 0, out.width, out.height);
+  const p = img.data, n = out.width * out.height;
+  const gray = new Uint8Array(n);
+  for (let i = 0, j = 0; i < n; i++, j += 4) {
+    gray[i] = (p[j] * 0.299 + p[j + 1] * 0.587 + p[j + 2] * 0.114) | 0;
+  }
+  const thr = otsuThreshold(gray);
+  for (let i = 0, j = 0; i < n; i++, j += 4) {
+    const v = gray[i] > thr ? 255 : 0;
+    p[j] = p[j + 1] = p[j + 2] = v;
+    p[j + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  return out;
 }
 
 function canvasToJpeg(canvas, quality) {
@@ -1501,11 +1529,21 @@ async function run() {
             parts.push({ kind: 'image', enc, w: canvas.pageW || 0, h: canvas.pageH || 0 });
           } else {
             markPage(idx, 'run', label + ' — القراءة الضوئية');
+            // نقرأ نسخة ثنائية عالية التباين: أدق للنصوص الصغيرة (أرقام الصفحات) مع إبقاء
+            // الصورة المرئية كما اختارها المستخدم (رمادي/ألوان).
+            let ocrCanvas = canvas;
+            let ocrExtra = null;
+            if (+$('cleanSel').value === 1) {
+              ocrExtra = binarizeForOcr(canvas);
+              ocrCanvas = ocrExtra;
+            }
             let res;
             try {
-              res = await worker.recognize(canvas, {}, { pdf: true, text: true });
+              res = await worker.recognize(ocrCanvas, {}, { pdf: true, text: true });
             } catch (e) {
               throw new Error('فشلت القراءة الضوئية في ' + label + ': ' + (e.message || e));
+            } finally {
+              if (ocrExtra) freeCanvas(ocrExtra);
             }
             const data = res.data || {};
             if (!data.pdf) throw new Error('لم يُرجع المحرك طبقة نصية لـ ' + label + '. جرّب دقة أعلى أو أزل خيار Otsu.');

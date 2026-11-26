@@ -36,28 +36,50 @@ PDF.js applies the bidi algorithm when returning text items, so RTL text comes b
 
 | Case | Preset | Output | Saving | Time | Char acc. | Word acc. | Probes | Confidence |
 |---|---|---|---|---|---|---|---|---|
-| `balanced` | JPEG 2000 px / 66% | **175,545 B** (171 KiB) | **−83%** | 24.1 s | 98.63% | 94.19% | 10/10 | 88% |
-| `max` | 1‑bit Flate 1600 px | **24,247 B** (24 KiB) | **−98%** | 24.2 s | 98.63% | 94.19% | 10/10 | 88% |
-| `high` | JPEG 2800 px / 82% | **531,330 B** (519 KiB) | **−48%** | 22.1 s | 98.63% | 94.19% | 10/10 | 88% |
-| `noocr` | JPEG 2000 px / 66% | **169,762 B** (166 KiB) | **−84%** | 5.0 s | — (no text layer) | — | — | — |
-| `image` | scanned PNG 3.44 MiB → JPEG 2000 px | **80,283 B** (78 KiB) | **−98%** | 13.3 s | 98.25% | 93.65% | 6/10 | 85% |
+| `balanced` | JPEG 2000 px / 66% | **167,604 B** (164 KiB) | **−84%** | 19.2 s | 98.22% | 93.84% | 10/10 | 88% |
+| `max` | 1‑bit Flate 2000 px | **31,634 B** (31 KiB) | **−97%** | 18.1 s | 98.22% | 93.84% | 10/10 | 88% |
+| `ai` | JPEG 2400 px / 88% | **608,461 B** (594 KiB) | **−41%** | 17.9 s | 98.22% | 93.84% | 10/10 | 88% |
+| `high` | JPEG 2800 px / 82% | **550,857 B** (538 KiB) | **−47%** | 18.3 s | 98.22% | 93.84% | 10/10 | 88% |
+| `noocr` | JPEG 2000 px / 66% | **161,751 B** (158 KiB) | **−84%** | 5.7 s | — (no text layer) | — | — | — |
+| `image` | scanned PNG 3.44 MiB → JPEG 2000 px | **80,283 B** (78 KiB) | **−98%** | 8.2 s | 100% | 100% | 7/10* | 91% |
+
+\* The image case contains page 1 only; probes for page-2 vocabulary cannot match.
 
 - Page size preserved on all cases: **595.28 × 841.89 pt (A4)** for the PDF cases; 495.36 × 689.52 pt for the raw image case.
 - Ink coverage per page: 1.4–2.2% (page images present, white background, not inverted).
-- Per-page confidence: 90% / 86% (unchanged from the OCR-only build).
 - Console errors: **0** in every case.
+- OCR now runs at **4×** on a **binarized (Otsu) copy of the page** while the visible image stays grayscale — this raised the raw-image case to 100% and fixed small footer text (see below).
 
-The OCR accuracy is identical across the three compression presets because the compression step only re-encodes the *visible* page image; the Tesseract text layer (and the OCR input) are unchanged. `max` is the most aggressive: it stores the page as a 1‑bit `DeviceGray` image (`/FlateDecode`, `BitsPerComponent 1`) after Otsu thresholding, which is why 2 A4 pages fit in 24 KiB.
+The OCR accuracy is identical across compression presets because compression only re-encodes the *visible* page image; the Tesseract text layer is produced from the same 4× binarized copy. `max` is the most aggressive: 1‑bit `DeviceGray` (`/FlateDecode`, 1 bpc) at 2000 px.
+
+## Printed page numbers (AI readability)
+
+A dedicated 3-page A4 test document was generated: Arabic body text, a printed page number at 10 pt in the footer (11, 12, 13), ±0.8° rotation and scanner noise, embedded as full-page scans. Each preset was run and the output checked for (a) the number in the PDF text layer and (b) the footer's visual legibility at 150 DPI.
+
+| Setting | Text layer page 1 | page 2 | page 3 | Footer visible at 150 DPI |
+|---|---|---|---|---|
+| Old: 3× OCR, 1‑bit 1600 px `max` | `11` | **missing** | **`18` (misread)** | unreadable |
+| New: 4× OCR + Otsu copy (balanced) | `11` | `12` | `13` | readable |
+| New: 4× OCR + Otsu copy (`max`, 2000 px) | `11` | `12` | `13` | readable |
+| New: 4× OCR + Otsu copy (`high`) | `11` | `12` | `13` | readable |
+
+Root causes and fixes:
+
+1. Small footer digits were below the reliable recognition size at 3×; Tesseract dropped `12` and read `13` as `18`, so the invisible text layer had no page number for those pages. Fix: default OCR resolution **4×**, and OCR on a contrast-optimized **binarized copy** (Otsu) that is separate from the visible page image.
+2. At 1600 px the 1‑bit page image made 10 pt digits mushy for vision models. Fix: `max` is now **2000 px**, and a new **`ai` preset (2400 px / 88%)** targets image-reading models.
+
+Artifacts: `ocr-pdf-tests/pagenum.pdf`, `pagenum-<preset>.pdf`, `pagenum-*-footer-*.png`.
 
 ## Structural verification (pypdf)
 
 | File | Pages | Page box | Image XObject | Text layer |
 |---|---|---|---|---|
-| `balanced.pdf` | 2 | 595.28×841.89 | `/DCTDecode`, `/DeviceRGB`, 8 bpc, 1436×2000 | 1 font, 425 chars on page 1 |
-| `max.pdf` | 2 | 595.28×841.89 | `/FlateDecode`, `/DeviceGray`, **1 bpc**, 1149×1600 | 1 font, 425 chars on page 1 |
-| `high.pdf` | 2 | 595.28×841.89 | `/DCTDecode`, `/DeviceRGB`, 8 bpc, 1843×2566 | 1 font, 425 chars on page 1 |
+| `balanced.pdf` | 2 | 595.28×841.89 | `/DCTDecode`, `/DeviceRGB`, 8 bpc, 1436×2000 | 1 font, text on page 1 |
+| `max.pdf` | 2 | 595.28×841.89 | `/FlateDecode`, `/DeviceGray`, **1 bpc**, 1436×2000 | 1 font, text on page 1 |
+| `ai.pdf` | 2 | 595.28×841.89 | `/DCTDecode`, `/DeviceRGB`, 8 bpc, 1723×2400 | 1 font, text on page 1 |
+| `high.pdf` | 2 | 595.28×841.89 | `/DCTDecode`, `/DeviceRGB`, 8 bpc, 2010×2800 | 1 font, text on page 1 |
 | `noocr.pdf` | 2 | 595.28×841.89 | `/DCTDecode` (embedded via pdf-lib), 1436×2000 | **none** (0 fonts, 0 chars) — as designed |
-| `image.pdf` | 1 | 495.36×689.52 | `/DCTDecode`, 1437×2000 | 1 font, 425 chars |
+| `image.pdf` | 1 | 495.36×689.52 | `/DCTDecode`, 1437×2000 | 1 font, text on page 1 |
 
 The original Tesseract image stream is removed from the page document (`context.delete`), so the compressed image is the only image in the output — no orphaned baseline image bloats the file.
 
@@ -72,7 +94,7 @@ Pages were rendered from the downloaded PDFs with PDF.js at 1.4× and inspected:
 
 | Check | Result |
 |---|---|
-| Preset → advanced controls sync (max selects 1‑bit/1600, quality disabled) | ✅ |
+| Preset → advanced controls sync (max selects 1‑bit/2000, quality disabled) | ✅ |
 | Custom preset reveals controls; hint & `qualityVal` update live | ✅ |
 | `بدون OCR` disables the language select, TXT/copy buttons, hides the text block, and switches the result note | ✅ |
 | Re-running with OCR re-enables TXT/copy and shows the text block again | ✅ |
